@@ -1,9 +1,19 @@
 class Pawn():
 
-    def __init__(self,color,position,pawn_id):
-        self.pawn_id=pawn_id
+    def __init__(self,color,position):
         self.color=color
         self.position=position
+        self.king=False
+        
+    def return_possible_regular_movements(self,board):
+        pass
 
-    def print_pawn_position(self):
-        print(self.position,self.pawn_id,self.color)
+    def return_possible_beatings(self,board):
+        pass
+
+    def return_kings_beatings(self,board):
+        pass
+
+    def return_kings_possible_movements(self,board):
+        pass
+
