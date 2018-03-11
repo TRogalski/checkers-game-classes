@@ -2,12 +2,14 @@ from pawn import Pawn
 
 class Board:
     def __init__(self):
-        self.pawn_coordinates={'w':[[5,1],[5,3],[5,5],[5,7],
+        self.pawn_coordinates={'w': [[3, 7], [6, 0], [1, 5], [7, 1], [7, 3], [7, 5], [7, 7]],
+                               'b': [[0, 0], [0, 2], [1, 3], [3, 3], [1, 1], [2, 0]]}
+        '''self.pawn_coordinates={'w':[[5,1],[5,3],[5,5],[5,7],
                                     [6,0],[6,2],[6,4],[6,6],
                                     [7,1],[7,3],[7,5],[7,7]],
                                'b':[[0,0],[0,2],[0,4],[0,6],
                                     [1,1],[1,3],[1,5],[1,7],
-                                    [2,0],[2,2],[2,4],[2,6]]}
+                                    [2,0],[2,2],[2,4],[2,6]]}'''
         self.pawns_that_can_beat=[]    
         self.pawns={}
         
@@ -25,7 +27,14 @@ class Board:
         self.starting_coordinates=None
         self.ending_coordinates=None
         self.all_pawn_positions=None
-        
+
+    def check_if_eligible_for_promotion(self, now_moves,ending_coordinates):
+        if now_moves=='w' and ending_coordinates in [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7]]:
+            return True
+        elif now_moves=='b' and ending_coordinates in [[7,0],[7,1],[7,2],[7,3],[7,4],[7,5],[7,6],[7,7]]:
+            return True
+        else:
+            return False
         
     def create_pawns(self):     
         for color in self.pawn_coordinates.keys():
@@ -46,7 +55,12 @@ class Board:
             for i in range(8):
                 for j in range (8):
                     if [i,j] in self.pawn_coordinates[color]:
-                        self.board[i][j]=' ' + color + ' |'
+                        for item in self.pawns.keys():
+                            if self.pawns[item].position==[i,j]:
+                                if self.pawns[item].king:
+                                    self.board[i][j]=' ' + color.upper() + ' |'
+                                else:
+                                    self.board[i][j]=' ' + color.lower() + ' |'
                     elif [i,j] not in self.all_pawn_positions:
                         self.board[i][j]='   |'
 
@@ -60,6 +74,7 @@ class Board:
         for item in self.pawns.keys():
             self.pawns[item].return_possible_regular_movements(self.all_pawn_positions)
             self.pawns[item].return_possible_beatings(self.all_pawn_positions,self.pawn_coordinates[{'w':'b','b':'w'}[self.now_moves]],self.now_moves)
+
         
     def switch_player(self):
         players={'w':'b','b':'w'}
@@ -101,7 +116,7 @@ class Board:
                 print("Invalid coordinates for a pawn, please input these again.")
                 continue
 
-    def return_possible_movements_of_a_pawn(self,position,option=1):
+    def return_possible_movements_of_a_pawn(self,position,option):
         for item in self.pawns.keys():
             if self.pawns[item].position==position:
                 if option==1:
@@ -117,7 +132,11 @@ class Board:
             try:
                 self.ending_coordinates=input("Where do you want to move? (q to exit): ")
                 self.ending_coordinates=self.translate_coordinates(self.ending_coordinates)
-                if self.ending_coordinates in self.return_possible_movements_of_a_pawn(self.starting_coordinates):
+                if self.return_possible_movements_of_a_pawn(self.starting_coordinates,3) and self.ending_coordinates not in self.return_possible_movements_of_a_pawn(self.starting_coordinates,3):
+                    print("This pawn can beat. Input again...")
+                    continue
+                
+                elif self.ending_coordinates in self.return_possible_movements_of_a_pawn(self.starting_coordinates,1):
                     break
                 else:
                     raise ValueError
@@ -174,6 +193,8 @@ class Board:
                 for item in self.pawns.keys():
                     if self.starting_coordinates==self.pawns[item].position:
                         self.pawns[item].position=self.ending_coordinates
+                        if self.check_if_eligible_for_promotion(self.now_moves,self.ending_coordinates):
+                            self.pawns[item].king=True
                 must_move=False
                 
             elif self.ending_coordinates in self.return_possible_movements_of_a_pawn(self.starting_coordinates,3):
@@ -201,6 +222,7 @@ if __name__=='__main__':
         board.make_a_move()
         board.update_board_variables()
         board.display_actual_board()
+        print(board.pawn_coordinates)
 
   
         
