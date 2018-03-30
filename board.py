@@ -125,14 +125,24 @@ class Board:
                     return self.pawns[item].possible_movement
                 elif option==3:
                     return self.pawns[item].possible_beating
-                
+
+
+    def is_beating_ending_correct(self):
+        ending_moves=self.return_possible_movements_of_a_pawn(self.starting_coordinates,3)
+        if ending_moves:
+            for coordinates in ending_moves:
+                if self.ending_coordinates in coordinates or self.ending_coordinates==coordinates:
+                    return True
+        return False
+           
     def ask_for_ending_coordinates(self):
         
         while True:
             try:
                 self.ending_coordinates=input("Where do you want to move? (q to exit): ")
                 self.ending_coordinates=self.translate_coordinates(self.ending_coordinates)
-                if self.return_possible_movements_of_a_pawn(self.starting_coordinates,3) and self.ending_coordinates not in self.return_possible_movements_of_a_pawn(self.starting_coordinates,3):
+                #ending coordinates - add function which will check if the ones inserted are correct
+                if self.return_possible_movements_of_a_pawn(self.starting_coordinates,3) and not self.is_beating_ending_correct:
                     print("This pawn can beat. Input again...")
                     continue
                 
@@ -196,7 +206,7 @@ class Board:
                         if self.check_if_eligible_for_promotion(self.now_moves,self.ending_coordinates):
                             self.pawns[item].king=True
                 must_move=False
-                
+            #beating logic needs to be added in here    
             elif self.ending_coordinates in self.return_possible_movements_of_a_pawn(self.starting_coordinates,3):
                 for item in self.pawns.keys():
                     if self.starting_coordinates==self.pawns[item].position:
@@ -222,7 +232,7 @@ if __name__=='__main__':
         board.make_a_move()
         board.update_board_variables()
         board.display_actual_board()
-        print(board.pawn_coordinates)
+        board.pawn_coordinates
 
   
         

@@ -1,25 +1,13 @@
 
 
-
-
-position=[7,0]
-
-possible_moves=[[-1,1],[1,-1],[-1,-1],[1,1]]
-
-z=[]
-for item in possible_moves:
-    for multiplier in range(1,8):
-        z.append([multiplier*coordinate for coordinate in item])
-
-
-
-
-#print(possible_moves)
-final=[]
-for item in z:
-    final.append([x+y for x,y in zip(position,item)])
-
-print([i for i in final if i[0]>=0 and i[0]<=7 and i[1]>=0 and i[1]<=7])
+def return_corresponding(number,list_to):
+    x=1
+    for i in list_to:
+        if number in i or number==i:
+            return x
+        x+=1
+    return False        
 
 
         
+print(return_corresponding([3,4],[[[3,4],[4,6]],[1,4]]))
