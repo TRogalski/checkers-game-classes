@@ -1,13 +1,11 @@
-
-
-def return_corresponding(number,list_to):
+def return_corresponding2(number, list_to_be_checked):
     x=1
-    for i in list_to:
-        if number in i or number==i:
+    for element in list_to_be_checked:
+        if number in element or number == element:
             return x
-        x+=1
-    return False        
+        else:
+            x+=1
+    return 0
 
-
-        
-print(return_corresponding([3,4],[[[3,4],[4,6]],[1,4]]))
+print(return_corresponding2([4,6],[[4,6]]))
+print([[2,1],[[4,6],[3,1]]].index([4,6]))
