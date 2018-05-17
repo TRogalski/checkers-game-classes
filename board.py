@@ -65,6 +65,12 @@ class Board:
         for item in self.pawns.keys():
             self.pawns[item].return_possible_regular_movements(self.pawn_coordinates['w']+self.pawn_coordinates['b'])
             self.pawns[item].return_possible_beatings()
+
+    def update_routine(self):
+        self.list_pawn_coordinates()
+        self.update_pawn_movements()
+        self.update_board()
+        self.display_board()
         
     def switch_player(self):
         players={'w': 'b','b': 'w'}
@@ -97,8 +103,12 @@ class Board:
 
     def make_a_move(self):
         for item in self.pawns.keys():
-            if self.pawns[item].position==self.starting_coordinates:
-                print(self.pawns[item].possible_movement)
+            if all([self.pawns[item].position==self.starting_coordinates,
+                    self.ending_coordinates in self.pawns[item].possible_movement]):
+                self.pawns[item].position=self.ending_coordinates
+                self.update_routine()
+                break
+                
                 
     def return_possible_movements_of_a_pawn(self, position, option):
         for item in self.pawns.keys():
@@ -122,11 +132,9 @@ class Board:
 if __name__ == '__main__':
     board = Board()
     board.create_pawns()
-    board.update_board_variables()
-    board.display_actual_board()
+    board.update_routine()
     while True:
         board.display_queue_status()
-        board.update_pawn_movements()
         board.ask_for_starting_coordinates()
         board.ask_for_ending_coordinates()
         board.make_a_move()

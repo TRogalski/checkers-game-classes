@@ -17,7 +17,8 @@ class Pawn():
     def return_possible_regular_movements(self,all_pawns):
         directions=self.movement_directions[self.color]
         self.possible_movement=[]
-        
+
+        if not self.king:
         for direction in directions:
             movement_candidate=[x+y for x,y in zip(self.position,direction)]
             if all([self.check_if_within_board(movement_candidate),
