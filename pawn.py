@@ -14,16 +14,28 @@ class Pawn():
         self.beating_directions=[[-1,-1],[-1,1],
                                  [1,1],[1,-1]]
         
-    def return_possible_regular_movements(self,all_pawns):
+    def return_possible_regular_movements(self,pawn_coordinates):
+        all_pawns=pawn_coordinates['w']+pawn_coordinates['b']
         directions=self.movement_directions[self.color]
         self.possible_movement=[]
 
-        if not self.king:
-        for direction in directions:
-            movement_candidate=[x+y for x,y in zip(self.position,direction)]
-            if all([self.check_if_within_board(movement_candidate),
-                    movement_candidate not in all_pawns]):
-                self.possible_movement.append(movement_candidate)
+        if self.king:
+            for direction in self.beating_directions:
+                jump_length=1
+                while True:
+                    movement_candidate=[x+y*jump_length for x,y in zip(self.position,direction)]
+                    if all([self.check_if_within_board(movement_candidate),
+                            movement_candidate not in all_pawns]):
+                        self.possible_movement.append(movement_candidate)
+                        jump_length+=1
+                    else:
+                        break                                           
+        else:
+            for direction in directions:
+                movement_candidate=[x+y for x,y in zip(self.position,direction)]
+                if all([self.check_if_within_board(movement_candidate),
+                        movement_candidate not in all_pawns]):
+                    self.possible_movement.append(movement_candidate)
 
         
 
@@ -36,8 +48,27 @@ class Pawn():
         else:
             return True
 
-    def return_possible_beatings(self):
-        pass
+    def return_possible_beatings(self,pawn_coordinates):
+        directions=self.beating_directions
+        self.possible_beating=[]
+        self.corresponding_beaten=[]
+        enemy_pawns=pawn_coordinates[{'w':'b','b':'w'}[self.color]]
+        ally_pawns=pawn_coordinates[self.color]
+        all_pawns=pawn_coordinates['w']+pawn_coordinates['b']
+
+        if self.king:
+            pass
+        else:  
+            for direction in directions:
+                candidate_beating=[x+y for x,y in zip(self.position,direction)]
+                if all([candidate_beating in enemy_pawns,
+                        candidate_beating not in ally_pawns]):
+                    candidate_free=[x+y for x,y in zip(candidate_beating,direction)]
+                    if  all([candidate_free not in all_pawns,
+                            self.check_if_within_board(candidate_free)]):
+                        self.possible_beating.append(candidate_free)
+                        self.corresponding_beaten.append(candidate_beating)
+        print(self.position,self.possible_beating,self.corresponding_beaten)
                
     def return_possible_king_beatings(self, pawn_coordinates, enemy_pawn_coordinates, now_moves):
         self.possible_beating = []

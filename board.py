@@ -62,9 +62,12 @@ class Board:
             print('  ', '___|'*8)
 
     def update_pawn_movements(self):
+        ally_color=self.now_moves
+        enemy_color={'w':'b','b':'w'}[ally_color]
+        
         for item in self.pawns.keys():
-            self.pawns[item].return_possible_regular_movements(self.pawn_coordinates['w']+self.pawn_coordinates['b'])
-            self.pawns[item].return_possible_beatings()
+            self.pawns[item].return_possible_regular_movements(self.pawn_coordinates)
+            self.pawns[item].return_possible_beatings(self.pawn_coordinates)
 
     def update_routine(self):
         self.list_pawn_coordinates()
@@ -101,6 +104,14 @@ class Board:
         coordinates[0] = self.alphabet.index(coordinates[0].upper())
         return coordinates
 
+
+    def move(self):
+        print(self.check_if_beating_possible(self.starting_coordinates))
+        if self.check_if_beating_possible(self.starting_coordinates):
+            self.make_a_beating()
+        else:
+            self.make_a_move()
+    
     def make_a_move(self):
         for item in self.pawns.keys():
             if all([self.pawns[item].position==self.starting_coordinates,
@@ -108,18 +119,50 @@ class Board:
                 self.pawns[item].position=self.ending_coordinates
                 self.update_routine()
                 break
-                
-                
-    def return_possible_movements_of_a_pawn(self, position, option):
-        for item in self.pawns.keys():
-            if self.pawns[item].position == position:
-                if option == 1:
-                    return self.pawns[item].possible_movement+self.pawns[item].possible_beating
-                elif option == 2:
-                    return self.pawns[item].possible_movement
-                elif option == 3:
-                    return self.pawns[item].possible_beating
 
+    def make_a_beating(self):
+        beating_moves=self.get_possible_beatings(self.starting_coordinates)
+        corresponding_beaten=self.get_corresponding_beaten(self.starting_coordinates)
+        if self.ending_coordinates in beating_moves:
+            corresponding_beaten_index=beating_moves.index(self.ending_coordinates)
+            pawn_to_be_removed=corresponding_beaten[corresponding_beaten_index]
+            self.remove_a_pawn(pawn_to_be_removed)
+            self.update_position(self.starting_coordinates,self.ending_coordinates)
+            self.update_routine()
+
+    def update_position(self,starting_position,ending_position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==starting_position:
+                self.pawns[item].position=ending_position
+                break
+        
+
+    def get_possible_beatings(self,position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==position:
+                return self.pawns[item].possible_beating
+                
+    
+    def get_corresponding_beaten(self,position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==position:
+                return self.pawns[item].corresponding_beaten
+
+    def remove_a_pawn(self,position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==position:
+                del self.pawns[item]
+                break
+
+    def check_if_beating_possible(self,position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==position:
+                if len(self.pawns[item].possible_beating)>0:
+                    return True
+                else:
+                    return False
+                
+    
     def update_board_variables(self):
         self.list_pawn_coordinates()
         self.update_pawn_movements()
@@ -128,7 +171,7 @@ class Board:
         self.update_board()
         self.display_board()
 
-        
+    
 if __name__ == '__main__':
     board = Board()
     board.create_pawns()
@@ -137,6 +180,6 @@ if __name__ == '__main__':
         board.display_queue_status()
         board.ask_for_starting_coordinates()
         board.ask_for_ending_coordinates()
-        board.make_a_move()
+        board.move()
         board.switch_player()
         
