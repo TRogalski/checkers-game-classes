@@ -57,7 +57,7 @@ class Pawn():
         all_pawns=pawn_coordinates['w']+pawn_coordinates['b']
 
         if self.king:
-            pass
+            self.return_possible_king_beatings(all_pawns,ally_pawns, enemy_pawns)
         else:  
             for direction in directions:
                 candidate_beating=[x+y for x,y in zip(self.position,direction)]
@@ -68,40 +68,37 @@ class Pawn():
                             self.check_if_within_board(candidate_free)]):
                         self.possible_beating.append(candidate_free)
                         self.corresponding_beaten.append(candidate_beating)
-        print(self.position,self.possible_beating,self.corresponding_beaten)
+        print(self.position,"possible beating move:",self.possible_beating,"corresponding beaten:",self.corresponding_beaten)
                
-    def return_possible_king_beatings(self, pawn_coordinates, enemy_pawn_coordinates, now_moves):
+    def return_possible_king_beatings(self, all_pawns, ally_pawns, enemy_pawns):
         self.possible_beating = []
         self.corresponding_beaten = []
         
-        all_pawns=pawn_coordinates
-        possible_moves=[[-1,1],[1,-1],[-1,-1],[1,1]]
         beatings=[]
         corresponding_beaten=[]
 
-        for step in possible_moves:
-            iter_free=[]
+        for step in self.beating_directions:
+            free_fields=[]
             multi=1
             while True:
                 outer_step=[i*multi for i in step]
-                candidate_beaten=[x+y for x,y in zip(position,outer_step)]
-                if all([self.check_if_within_board(candidate_beaten),
-                        candidate_beaten not in allies_pawns]):
+                candidate_beaten=[x+y for x,y in zip(self.position,outer_step)]
+                if any([not self.check_if_within_board(candidate_beaten),
+                        candidate_beaten in ally_pawns]):
                     break
                 if candidate_beaten in enemy_pawns:
                         multiplier=1
                         while True:
                             inner_step=[i*multiplier for i in step]
                             candidate_free=[x+y for x,y in zip(candidate_beaten,inner_step)]
-                            if all([self.check_if_within_board(candidate_free),
-                                    candidate_free not in all_pawns]):
+                            if any([not self.check_if_within_board(candidate_free),
+                                    candidate_free in all_pawns]):
                                             break
-                            iter_free.append(candidate_free)
+                            free_fields.append(candidate_free)
                             multiplier+=1
-                        if len(iter_free)>0:
-                                            self.possible_beating.append(candidate_beaten)
-                                            slef.corresponding_beaten.append(iter_free)
+                        if len(free_fields)>0:
+                            self.possible_beating.append(free_fields)
+                            self.corresponding_beaten.append(candidate_beaten)
                 multi+=1
-        print(self.possible_beating)
-        print(self.corresponding_beaten)
+
 

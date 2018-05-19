@@ -2,14 +2,14 @@ from pawn import Pawn
 
 class Board:
     def __init__(self):
-        '''self.pawn_coordinates = {'w': [[3, 7], [6, 0], [1, 5], [7, 1], [7, 3], [7, 5], [7, 7]],
-                               'b': [[0, 0], [0, 2], [1, 3], [3, 3], [1, 1], [2, 0]]}'''
-        self.pawn_coordinates={'w':[[5,1],[5,3],[5,5],[5,7],
+        self.pawn_coordinates = {'w': [[3, 7], [6, 0], [1, 5], [7, 1], [7, 3], [7, 5], [7, 7]],
+                               'b': [[0, 0], [0, 2], [1, 3], [3, 3], [1, 1], [2, 0]]}
+        '''self.pawn_coordinates={'w':[[5,1],[5,3],[5,5],[5,7],
                                     [6,0],[6,2],[6,4],[6,6],
                                     [7,1],[7,3],[7,5],[7,7]],
                                'b':[[0,0],[0,2],[0,4],[0,6],
                                     [1,1],[1,3],[1,5],[1,7],
-                                    [2,0],[2,2],[2,4],[2,6]]}
+                                    [2,0],[2,2],[2,4],[2,6]]}'''
         self.pawns_that_can_beat = []    
         self.pawns = {}
         self.board = [['', '', '', '', '', '', '', ''],
@@ -84,13 +84,13 @@ class Board:
 
     def mark_pawns_that_can_beat(self):
         self.pawns_that_can_beat = []
-
         for item in self.pawns.keys():
             if self.pawns[item].possible_beating and self.pawns[item].color == self.now_moves:
                 self.pawns_that_can_beat.append(self.pawns[item].position)
   
     def ask_for_starting_coordinates(self):
         self.mark_pawns_that_can_beat()
+        print("Can beat:",self.pawns_that_can_beat)
         self.starting_coordinates = input("Which pawn do you want to move? (q to exit): ")
         self.starting_coordinates = self.translate_coordinates(self.starting_coordinates)
 
@@ -106,29 +106,70 @@ class Board:
 
 
     def move(self):
-        print(self.check_if_beating_possible(self.starting_coordinates))
+        
         if self.check_if_beating_possible(self.starting_coordinates):
             self.make_a_beating()
+            #below line only if no other moves are possilbe
+            self.promote_if_eligible(self.ending_coordinates)
+            
         else:
             self.make_a_move()
+            self.promote_if_eligible(self.ending_coordinates)
+        self.update_routine()
+        
     
     def make_a_move(self):
         for item in self.pawns.keys():
             if all([self.pawns[item].position==self.starting_coordinates,
                     self.ending_coordinates in self.pawns[item].possible_movement]):
                 self.pawns[item].position=self.ending_coordinates
-                self.update_routine()
                 break
 
     def make_a_beating(self):
         beating_moves=self.get_possible_beatings(self.starting_coordinates)
         corresponding_beaten=self.get_corresponding_beaten(self.starting_coordinates)
-        if self.ending_coordinates in beating_moves:
-            corresponding_beaten_index=beating_moves.index(self.ending_coordinates)
-            pawn_to_be_removed=corresponding_beaten[corresponding_beaten_index]
-            self.remove_a_pawn(pawn_to_be_removed)
-            self.update_position(self.starting_coordinates,self.ending_coordinates)
-            self.update_routine()
+        king=self.get_pawn_rank(self.starting_coordinates)
+
+        if king:
+            print("THAT IS A KING!")
+            print(self.ending_coordinates_in_beating_moves(beating_moves,self.ending_coordinates))
+            if self.ending_coordinates_in_beating_moves(beating_moves,self.ending_coordinates):
+                corresponding_beaten_index=self.return_corresponding_beaten_index(beating_moves,self.ending_coordinates)
+                print(corresponding_beaten_index)
+                pawn_to_be_removed=corresponding_beaten[corresponding_beaten_index]
+                self.remove_a_pawn(pawn_to_be_removed)
+                self.update_position(self.starting_coordinates,self.ending_coordinates)
+                
+        else:
+            if self.ending_coordinates in beating_moves:
+                corresponding_beaten_index=beating_moves.index(self.ending_coordinates)
+                pawn_to_be_removed=corresponding_beaten[corresponding_beaten_index]
+                self.remove_a_pawn(pawn_to_be_removed)
+                self.update_position(self.starting_coordinates,self.ending_coordinates)
+
+    def return_corresponding_beaten_index(self,beating_moves,position):
+        beating_index=0
+        for item in beating_moves:
+            if any([position==item,
+                    position in item]):
+                return beating_index
+            beating_index+=1
+
+            
+    def ending_coordinates_in_beating_moves(self,beating_moves,position):
+        for item in beating_moves:
+            print("the item is:",item,"beating position is:",position)
+            if any([position in item,
+                    position==item]):
+                return True
+            else:
+                return False
+
+    def get_pawn_rank(self,position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==position:
+                return self.pawns[item].king
+
 
     def update_position(self,starting_position,ending_position):
         for item in self.pawns.keys():
@@ -162,6 +203,18 @@ class Board:
                 else:
                     return False
                 
+    def promote_if_eligible(self,position):
+        #this has to happen after the final move was made
+        promotion_fields={'b':[[7,1],[7,3],[7,5],[7,7]],'w':[[0,0],[0,2],[0,4],[0,6]]}
+        if position in promotion_fields[self.now_moves]:
+            self.promote_a_pawn(position)
+
+    def promote_a_pawn(self,position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==position:
+                self.pawns[item].king=True
+                print("PROMOTED!")
+                break
     
     def update_board_variables(self):
         self.list_pawn_coordinates()
