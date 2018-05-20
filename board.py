@@ -1,15 +1,18 @@
+import sys
+
+
 from pawn import Pawn
 
 class Board:
     def __init__(self):
-        self.pawn_coordinates = {'w': [[3, 7], [6, 0], [1, 5], [7, 1], [7, 3], [7, 5], [7, 7]],
-                               'b': [[0, 0], [0, 2], [1, 3], [3, 3], [1, 1], [2, 0]]}
-        '''self.pawn_coordinates={'w':[[5,1],[5,3],[5,5],[5,7],
+        '''self.pawn_coordinates = {'w': [[3, 7], [6, 0], [1, 5], [7, 1], [7, 3], [7, 5], [7, 7]],
+                               'b': [[0, 0], [0, 2], [1, 3], [3, 3], [1, 1], [2, 0]]}'''
+        self.pawn_coordinates={'w':[[5,1],[5,3],[5,5],[5,7],
                                     [6,0],[6,2],[6,4],[6,6],
                                     [7,1],[7,3],[7,5],[7,7]],
                                'b':[[0,0],[0,2],[0,4],[0,6],
                                     [1,1],[1,3],[1,5],[1,7],
-                                    [2,0],[2,2],[2,4],[2,6]]}'''
+                                    [2,0],[2,2],[2,4],[2,6]]}
         self.pawns_that_can_beat = []    
         self.pawns = {}
         self.board = [['', '', '', '', '', '', '', ''],
@@ -79,6 +82,10 @@ class Board:
         players={'w': 'b','b': 'w'}
         self.now_moves = players[self.now_moves]
 
+    def quit_qame(self):
+        print("Thank you for playing!")
+        sys.exit()
+        
     def display_queue_status(self):
         print("Now moves: "+self.now_moves)
 
@@ -91,31 +98,96 @@ class Board:
     def ask_for_starting_coordinates(self):
         self.mark_pawns_that_can_beat()
         print("Can beat:",self.pawns_that_can_beat)
-        self.starting_coordinates = input("Which pawn do you want to move? (q to exit): ")
-        self.starting_coordinates = self.translate_coordinates(self.starting_coordinates)
+        while True:
+            self.starting_coordinates = input("Which pawn do you want to move? (q to exit): ")
+
+            if self.starting_coordinates=="q":
+                self.quit_qame()
+
+            try:   
+                self.starting_coordinates = self.translate_coordinates(self.starting_coordinates)
+
+            except:
+                print("Please insert valid pawn coordinates.")
+                continue
+
+            if self.starting_coordinates not in self.pawn_coordinates[self.now_moves]:
+                print("Select pawn of your color.")
+                continue
+            
+            if all([self.pawns_that_can_beat,
+                    self.starting_coordinates not in self.pawns_that_can_beat]):
+                print("There are pawns which can beat, please select one of them.")
+                continue
+
+            if all([not self.get_possible_moves(self.starting_coordinates),
+                    self.starting_coordinates not in self.pawns_that_can_beat]):
+                print("Selected pawn position is incorrect, please try again.")
+                continue
+            break
 
     def ask_for_ending_coordinates(self):
-        self.ending_coordinates=input("Where do you want to move? (q to exit): ")
-        self.ending_coordinates=self.translate_coordinates(self.ending_coordinates)
+        print("Selected pawn: ",self.starting_coordinates)      
+        while True:
+            self.ending_coordinates=input("Where do you want to move? (q to exit): ")
+            
+            if self.ending_coordinates=="q":
+                self.quit_qame()
 
+            try:
+                self.ending_coordinates=self.translate_coordinates(self.ending_coordinates)
+            except:
+                print("Please insert valid pawn coordinates.")
+                continue
+
+            beating_moves=self.get_possible_beatings(self.starting_coordinates)
+            king=self.get_pawn_rank(self.starting_coordinates)
+            
+            if all([king,
+                    beating_moves,
+                    not self.ending_coordinates_in_beating_moves(beating_moves,self.ending_coordinates)]):
+                print("Selected pawn can beat, please pick correct beating coordinates.")
+                continue
+
+            if all([not king,
+                    beating_moves,
+                    self.ending_coordinates not in beating_moves]):
+                print("Selected pawn can beat, please pick correct beating coordinates.")
+                continue
+
+            if all([not beating_moves,
+                    self.ending_coordinates not in self.get_possible_moves(self.starting_coordinates)]):
+                print("This pawn cannot move there, please input valid coordinates.")
+                continue
+            break
+                
     def translate_coordinates(self, coordinates_to_translate):
         coordinates = list(coordinates_to_translate)
         coordinates[1] = int(coordinates[1])-1
         coordinates[0] = self.alphabet.index(coordinates[0].upper())
         return coordinates
 
-
     def move(self):
+
+        possible_beatings=self.check_if_beating_possible(self.starting_coordinates)
         
-        if self.check_if_beating_possible(self.starting_coordinates):
-            self.make_a_beating()
+        if possible_beatings:
+            while True:
+                self.make_a_beating()
+                self.update_routine()
+                self.starting_coordinates=self.ending_coordinates[:]
+                possible_beatings=self.check_if_beating_possible(self.starting_coordinates)
+                if possible_beatings:
+                    self.ask_for_ending_coordinates()
+                else:
+                    break
             #below line only if no other moves are possilbe
             self.promote_if_eligible(self.ending_coordinates)
             
         else:
             self.make_a_move()
             self.promote_if_eligible(self.ending_coordinates)
-        self.update_routine()
+            self.update_routine()
         
     
     def make_a_move(self):
@@ -131,8 +203,7 @@ class Board:
         king=self.get_pawn_rank(self.starting_coordinates)
 
         if king:
-            print("THAT IS A KING!")
-            print(self.ending_coordinates_in_beating_moves(beating_moves,self.ending_coordinates))
+            print("TUTAJ",self.ending_coordinates_in_beating_moves(beating_moves,self.ending_coordinates))
             if self.ending_coordinates_in_beating_moves(beating_moves,self.ending_coordinates):
                 corresponding_beaten_index=self.return_corresponding_beaten_index(beating_moves,self.ending_coordinates)
                 print(corresponding_beaten_index)
@@ -150,26 +221,25 @@ class Board:
     def return_corresponding_beaten_index(self,beating_moves,position):
         beating_index=0
         for item in beating_moves:
+
             if any([position==item,
                     position in item]):
                 return beating_index
             beating_index+=1
-
-            
+           
     def ending_coordinates_in_beating_moves(self,beating_moves,position):
         for item in beating_moves:
-            print("the item is:",item,"beating position is:",position)
+
             if any([position in item,
                     position==item]):
                 return True
-            else:
-                return False
+  
+        return False
 
     def get_pawn_rank(self,position):
         for item in self.pawns.keys():
             if self.pawns[item].position==position:
                 return self.pawns[item].king
-
 
     def update_position(self,starting_position,ending_position):
         for item in self.pawns.keys():
@@ -177,7 +247,6 @@ class Board:
                 self.pawns[item].position=ending_position
                 break
         
-
     def get_possible_beatings(self,position):
         for item in self.pawns.keys():
             if self.pawns[item].position==position:
@@ -189,6 +258,11 @@ class Board:
             if self.pawns[item].position==position:
                 return self.pawns[item].corresponding_beaten
 
+    def get_possible_moves(self,position):
+        for item in self.pawns.keys():
+            if self.pawns[item].position==position:
+                return self.pawns[item].possible_movement
+    
     def remove_a_pawn(self,position):
         for item in self.pawns.keys():
             if self.pawns[item].position==position:
@@ -213,7 +287,6 @@ class Board:
         for item in self.pawns.keys():
             if self.pawns[item].position==position:
                 self.pawns[item].king=True
-                print("PROMOTED!")
                 break
     
     def update_board_variables(self):
@@ -224,12 +297,25 @@ class Board:
         self.update_board()
         self.display_board()
 
+
+
+    def return_game_status(self):
+        white_pawns=len(self.pawn_coordinates['w'])
+        black_pawns=len(self.pawn_coordinates['b'])
+
+        print("Remaining whites: ",white_pawns,"Remaining blacks:",black_pawns)
+
+        if any([white_pawns==0,
+                black_pawns==0]):
+            self.quit_game()
+        
     
 if __name__ == '__main__':
     board = Board()
     board.create_pawns()
     board.update_routine()
     while True:
+        board.return_game_status()
         board.display_queue_status()
         board.ask_for_starting_coordinates()
         board.ask_for_ending_coordinates()
